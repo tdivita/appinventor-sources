@@ -285,8 +285,10 @@ public class YaVersion {
   // - WEB_COMPONENT_VERSION was incremented to 4.
   // For YOUNG_ANDROID_VERSION 106:
   // - LISTVIEW_COMPONENT_VERSION was incremented to 3.
+  // For YOUNG_ANDROID_VERSION 107:
+  // - BTLE_WICEDSENSE_COMPONENT_VERSION was incremented to 1.
 
-  public static final int YOUNG_ANDROID_VERSION = 106;
+  public static final int YOUNG_ANDROID_VERSION = 107;
 
   // ............................... Blocks Language Version Number ...............................
 
@@ -435,6 +437,9 @@ public class YaVersion {
 
   // David Garrett - start WICED Sense development
   public static final int WICEDSENSE_COMPONENT_VERSION = 1;
+  
+  // Tricia Divita - start BTLE Base and WICED Sense Child development
+  public static final int BTLE_WICEDSENSE_COMPONENT_VERSION = 1;
 
   // David Garrett - start WICED Sense development
   public static final int BUTTERWORTH_FILTER_COMPONENT_VERSION = 1;
