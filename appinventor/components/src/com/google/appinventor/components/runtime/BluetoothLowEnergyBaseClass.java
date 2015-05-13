@@ -295,46 +295,46 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	      return compareScan.getRssi() - this.rssi;
 	    }
 	  }
-//
-//	  // Set the sensor state
-//	  public void setSensorState() { 
-//
-//	    // Fire off characteristic 
-//	    if (validWICEDDevice) { 
-//
-//	      // Write the characteristic
-//	      if (mSensorNotification == null) { 
-//	        LogMessage("Trying to set sensors notification with null pointer", "e");
-//	      } else { 
-//	        BluetoothGattDescriptor mSensorNotificationClientConfig;
-//
-//	        // Update descriptor client config
-//	        mSensorNotificationClientConfig = mSensorNotification.getDescriptor(CLIENT_CONFIG_UUID);
-//	        if (mSensorNotificationClientConfig == null) {
-//	          LogMessage("Cannot find sensor client descriptor, this device is not supported", "e");
-//	          return;
-//	        }
-//
-//	        // set values in the descriptor
-//	        if (mSensorsEnabled) { 
-//	          mSensorNotificationClientConfig.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
-//	        } else { 
-//	          mSensorNotificationClientConfig.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
-//	        }
-//
-//	        // write the gatt descriptor
-//	        mBluetoothGatt.writeDescriptor(mSensorNotificationClientConfig); 
-//	        if (mSensorsEnabled) { 
-//	          LogMessage("Turning on Sensor notifications", "i");
-//	        } else { 
-//	          LogMessage("Turning off Sensor notifications", "i");
-//	        }
-//	      }
-//	    }
-//	  }
-//
-//
-//
+
+	  // Set the sensor state
+	  public void setSensorState() { 
+
+	    // Fire off characteristic 
+	    if (validWICEDDevice) { 
+
+	      // Write the characteristic
+	      if (mSensorNotification == null) { 
+	        LogMessage("Trying to set sensors notification with null pointer", "e");
+	      } else { 
+	        BluetoothGattDescriptor mSensorNotificationClientConfig;
+
+	        // Update descriptor client config
+	        mSensorNotificationClientConfig = mSensorNotification.getDescriptor(CLIENT_CONFIG_UUID);
+	        if (mSensorNotificationClientConfig == null) {
+	          LogMessage("Cannot find sensor client descriptor, this device is not supported", "e");
+	          return;
+	        }
+
+	        // set values in the descriptor
+	        if (mSensorsEnabled) { 
+	          mSensorNotificationClientConfig.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
+	        } else { 
+	          mSensorNotificationClientConfig.setValue(BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE);
+	        }
+
+	        // write the gatt descriptor
+	        mBluetoothGatt.writeDescriptor(mSensorNotificationClientConfig); 
+	        if (mSensorsEnabled) { 
+	          LogMessage("Turning on Sensor notifications", "i");
+	        } else { 
+	          LogMessage("Turning off Sensor notifications", "i");
+	        }
+	      }
+	    }
+	  }
+
+
+
 	  /** create adaptor */
 	  public static BluetoothAdapter newBluetoothAdapter(Context context) {
 	    final BluetoothManager bluetoothManager = 
@@ -488,8 +488,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	            }
 
 	            // Set the sensor state directly
-	            // TODO: Commenting this breaks stuff
-	            //setSensorState();
+	            setSensorState();
 
 	            // Triggers callback for connected device
 	            //Connected();
@@ -1019,40 +1018,40 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 //	    return mUseFahrenheit;
 //	  }
 //
-//	  /**
-//	   * Returns if Sensors are enabled
-//	   *
-//	   */
-//	  @SimpleProperty(description = "Returns true if Sensors are enabled", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public boolean SensorsEnabled() {
-//	    return mSensorsEnabled;
-//	  }
-//
-//	  /**
-//	   * Turns on sensors
-//	   *
-//	   */
-//	  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
-//	      defaultValue = "False")
-//	  @SimpleProperty(description = "Sets the sensor enabled flag", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public void SensorsEnabled(boolean enableFlag) {
-//
-//	    mSensorsEnabled = enableFlag;
-//	    if (enableFlag) { 
-//	      LogMessage("Setting SensorsEnabled to true", "i");
-//	    } else {
-//	      LogMessage("Setting SensorsEnabled to false", "i");
-//	    }
-//
-//	    // Transfer to device if it's connected
-//	    setSensorState();
-//
-//	  }
-//
+	  /**
+	   * Returns if Sensors are enabled
+	   *
+	   */
+	  @SimpleProperty(description = "Returns true if Sensors are enabled", 
+	                  category = PropertyCategory.BEHAVIOR,
+	                  userVisible = true)
+	  public boolean SensorsEnabled() {
+	    return mSensorsEnabled;
+	  }
+
+	  /**
+	   * Turns on sensors
+	   *
+	   */
+	  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
+	      defaultValue = "False")
+	  @SimpleProperty(description = "Sets the sensor enabled flag", 
+	                  category = PropertyCategory.BEHAVIOR,
+	                  userVisible = true)
+	  public void SensorsEnabled(boolean enableFlag) {
+
+	    mSensorsEnabled = enableFlag;
+	    if (enableFlag) { 
+	      LogMessage("Setting SensorsEnabled to true", "i");
+	    } else {
+	      LogMessage("Setting SensorsEnabled to false", "i");
+	    }
+
+	    // Transfer to device if it's connected
+	    setSensorState();
+
+	  }
+
 	  /**
 	   * Returns the scanning status
 	   *
