@@ -51,7 +51,6 @@ import java.util.UUID;
 * @author  David Garrett (not the violinist)
 */
 //@DesignerComponent(version = YaVersion.WICEDSENSE_COMPONENT_VERSION,
-// //category = ComponentCategory.CONNECTIVITY,
 // category = ComponentCategory.SENSORS,
 // description = "The WICEDSense component is still experimental",
 // nonVisible = true,
@@ -390,6 +389,8 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  }
 
 	  // TODO: Remove specific parts.
+	  // TODO: Make sure this gets overridden correctly for WICED component. Oh wait it's all in a constructor...?
+	  // TODO: Make a protected class that subclasses BluetoothGattCallback, I think.
 	  /** Various callback methods defined by the BLE API. */
 	  private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
 	        @Override
@@ -436,6 +437,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	          //RSSIUpdated();
 	        }
 	        
+	        // TODO: Override in WICED subclass.
 	        @Override
 	        // New services discovered
 	        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
@@ -496,6 +498,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	          }
 	        }
 
+	        // TODO: Figure out whether battery level is universal.
 	        @Override
 	        // Result of a characteristic read operation
 	        public void onCharacteristicRead(BluetoothGatt gatt, 
@@ -538,6 +541,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	           }
 	        }
 
+	        // TODO: Override in WICED subclass.
 	        @Override
 	        public void onCharacteristicChanged(BluetoothGatt gatt,
 	                         BluetoothGattCharacteristic characteristic) {
@@ -657,7 +661,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 //	//  }
 //
 //	  /**
-//	   * Callback events for batery levels
+//	   * Callback events for battery levels
 //	   */
 //	//  @SimpleEvent(description = "Received Battery Level.")
 //	//  public void BatteryLevelUpdated() { 
@@ -695,7 +699,6 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 //	    }
 //	  }
 
-	// TODO: This is not showing up in App Inventor blocks.
 	  /**
 	   * Allows the user to start the scan
 	   */
@@ -719,7 +722,6 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	    }
 	  }
 
-	// TODO: This is not showing up in App Inventor blocks.
 	  /**
 	   * Allows the user to Stop the scan
 	   */
@@ -821,21 +823,21 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 //	      LogMessage("Trying to read RSSI without a connected device", "e");
 //	    }
 //	  }
-//
-//	  /**
-//	   * Allows the user to disconnect
-//	   */
-//	  @SimpleFunction(description = "Disconnects GATT connection")
-//	  public void Disconnect() { 
-//	    String functionName = "Disconnect";
-//
-//	    if (mConnectionState == STATE_CONNECTED || mConnectionState == STATE_NEED_SERVICES) {
-//	      mBluetoothGatt.disconnect();
-//	      LogMessage("Disconnecting from device", "i");
-//	    } else { 
-//	      LogMessage("Trying to disconnect without a connected device", "e");
-//	    }
-//	  }
+
+	  /**
+	   * Allows the user to disconnect
+	   */
+	  @SimpleFunction(description = "Disconnects GATT connection")
+	  public void Disconnect() { 
+	    String functionName = "Disconnect";
+
+	    if (mConnectionState == STATE_CONNECTED || mConnectionState == STATE_NEED_SERVICES) {
+	      mBluetoothGatt.disconnect();
+	      LogMessage("Disconnecting from device", "i");
+	    } else { 
+	      LogMessage("Trying to disconnect without a connected device", "e");
+	    }
+	  }
 //
 //	  /**
 //	   * Resets the internal counter
@@ -847,7 +849,6 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 //	    tempCurrentTime = startTime;
 //	  }
 //
-	  // TODO: This is not showing up in App Inventor blocks.
 	  /**
 	   * Allows to Connect to closest Device 
 	   */
@@ -895,44 +896,44 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	      LogMessage("Trying to connect with an already connected device", "e");
 	    }
 	  }
-//
-//	  /**
-//	   * Allows the Connect to Device
-//	   */
-//	  @SimpleFunction(description = "Connects to the named WICED Sense kit")
-//	  public void Connect(String name) { 
-//	    String functionName = "Connect";
-//	    DeviceScanRecord nextScanRecord;
-//	    BluetoothDevice tempDevice;
-//	    String testname;
-//	    boolean foundDevice = false;
-//
-//	    if (mConnectionState == STATE_DISCONNECTED) { 
-//
-//	      // Search through strings and find matching one
-//	      for (int loop1 = 0; loop1 < mScannedDevices.size(); loop1++) {
-//	        // recover next device in list
-//	        tempDevice = mScannedDevices.get(loop1).getDevice();
-//	        testname = GetDeviceNameAndAddress(tempDevice);
-//	    
-//	        // check if this is the device
-//	        if (testname.equals(name)) { 
-//	          mDevice = tempDevice;
-//	          foundDevice = true;
-//	        }
-//	      }
-//	  
-//	      // Fire off the callback
-//	      if (foundDevice) { 
-//	        mBluetoothGatt = mDevice.connectGatt(activity, false, mGattCallback);
-//	        LogMessage("Connecting device " + GetDeviceNameAndAddress(mDevice), "i");
-//	      } else { 
-//	        LogMessage("No device found to connect", "e");
-//	      }
-//	    } else { 
-//	      LogMessage("Trying to connect with an already connected device", "e");
-//	    }
-//	  }
+
+	  /**
+	   * Allows the Connect to Device
+	   */
+	  @SimpleFunction(description = "Connects to the named WICED Sense kit")
+	  public void Connect(String name) { 
+	    String functionName = "Connect";
+	    DeviceScanRecord nextScanRecord;
+	    BluetoothDevice tempDevice;
+	    String testname;
+	    boolean foundDevice = false;
+
+	    if (mConnectionState == STATE_DISCONNECTED) { 
+
+	      // Search through strings and find matching one
+	      for (int loop1 = 0; loop1 < mScannedDevices.size(); loop1++) {
+	        // recover next device in list
+	        tempDevice = mScannedDevices.get(loop1).getDevice();
+	        testname = GetDeviceNameAndAddress(tempDevice);
+	    
+	        // check if this is the device
+	        if (testname.equals(name)) { 
+	          mDevice = tempDevice;
+	          foundDevice = true;
+	        }
+	      }
+	  
+	      // Fire off the callback
+	      if (foundDevice) { 
+	        mBluetoothGatt = mDevice.connectGatt(activity, false, mGattCallback);
+	        LogMessage("Connecting device " + GetDeviceNameAndAddress(mDevice), "i");
+	      } else { 
+	        LogMessage("No device found to connect", "e");
+	      }
+	    } else { 
+	      LogMessage("Trying to connect with an already connected device", "e");
+	    }
+	  }
 //
 //	  /**
 //	   * Returns the time since reset in milliseconds
@@ -979,19 +980,20 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 //	      
 //	    return timeMilliseconds;
 //	  }
-//
-//	  /**
-//	   * Sets the temperature setting for Fahrenheit or Celsius
-//	   *
-//	   */
-//	  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
-//	                    defaultValue = "True")
-//	  @SimpleProperty(description = "Keeps BTLE running in background", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public void RunInBackground(boolean enableFlag) {
-//	    mRunInBackground = enableFlag;
-//	  }
+
+	  /**
+	   * Sets the temperature setting for Fahrenheit or Celsius
+	   *
+	   */
+	  // TODO: Fix comment.
+	  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
+	                    defaultValue = "True")
+	  @SimpleProperty(description = "Keeps BTLE running in background", 
+	                  category = PropertyCategory.BEHAVIOR,
+	                  userVisible = true)
+	  public void RunInBackground(boolean enableFlag) {
+	    mRunInBackground = enableFlag;
+	  }
 //
 //	  /**
 //	   * Sets the temperature setting for Fahrenheit or Celsius
@@ -1051,17 +1053,17 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 //
 //	  }
 //
-//	  /**
-//	   * Returns the scanning status
-//	   *
-//	   * @return scanning if still scanning
-//	   */
-//	  @SimpleProperty(description = "Checks if BTLE device is scanning", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public boolean Scanning() {
-//	    return scanning;
-//	  }
+	  /**
+	   * Returns the scanning status
+	   *
+	   * @return scanning if still scanning
+	   */
+	  @SimpleProperty(description = "Checks if BTLE device is scanning", 
+	                  category = PropertyCategory.BEHAVIOR,
+	                  userVisible = true)
+	  public boolean Scanning() {
+	    return scanning;
+	  }
 //
 //
 //	  /**
@@ -1201,7 +1203,6 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 //	    return tempConvert;
 //	  }
 //
-	  // TODO: This is not showing up in App Inventor blocks.
 	  /**
 	   * Sets is enabled
 	   *
@@ -1213,154 +1214,154 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  public boolean Enabled() {
 	    return isEnabled;
 	  }
-//
-//	  /**
-//	   * Returns a list of the Gatt services
-//	   */
-//	  @SimpleProperty(description = "Lists the BLTE GATT Services", category = PropertyCategory.BEHAVIOR)
-//	  public List<String> DeviceServices() { 
-//	    List<String> listOfServices = new ArrayList<String>();
-//	    int numServices;
-//	    BluetoothGattService mService;
-//
-//	    // number of services discovered
-//	    numServices = mGattServices.size();
-//
-//	    // bail out if nothing found
-//	    if (numServices == 0) { 
-//	      listOfServices.add("No Services Found");
-//	      LogMessage("Did not find any Services", "i");
-//	    } else { 
-//	      LogMessage("Found " + numServices + " services", "i");
-//	      for (int loop1 = 0; loop1 < numServices; loop1++) {
-//	        mService = mGattServices.get(loop1);
-//	        if (mService != null) { 
-//	          listOfServices.add(mService.getUuid().toString());
-//	        }
-//	      }
-//	    }
-//	  
-//	    return listOfServices;
-//	  }
-//
-//	  /**
-//	   * Allows to access of scan records found in the Scan
-//	   */
-//	  @SimpleProperty(description = "Lists the scan record of all BLTE devices find in scan", category = PropertyCategory.BEHAVIOR)
-//	  public List<String> ScanRecords() { 
-//	    List<String> listOfScanRecords = new ArrayList<String>();
-//	    BluetoothDevice nextDevice;
-//
-//	    if (mScannedDevices.size() == 0) {
-//	      LogMessage("Did not find any devices in scan", "i");
-//	    } else { 
-//	      for (int loop1 = 0; loop1 < mScannedDevices.size(); loop1++) {
-//	        nextDevice = mScannedDevices.get(loop1).getDevice();
-//	        if (nextDevice != null) { 
-//	          listOfScanRecords.add(mScannedDevices.get(loop1).getScanRecord());
-//	          LogMessage("Adding scan record to list: " + mScannedDevices.get(loop1).getScanRecord(), "i");
-//	        }
-//	      }
-//	    }
-//
-//	    return listOfScanRecords;
-//	  }
-//
-//	  /**
-//	   * Allows to access of RSSI found in scan
-//	   */
-//	  @SimpleProperty(description = "Lists the RSSI of all BLTE devices find in scan", category = PropertyCategory.BEHAVIOR)
-//	  public List<Integer> ScanRSSI() { 
-//	    List<Integer> listOfRSSI = new ArrayList<Integer>();
-//	    BluetoothDevice nextDevice;
-//
-//	    if (mScannedDevices.size() == 0) {
-//	      LogMessage("Did not find any devices in scan", "i");
-//	    } else { 
-//	      for (int loop1 = 0; loop1 < mScannedDevices.size(); loop1++) {
-//	        nextDevice = mScannedDevices.get(loop1).getDevice();
-//	        if (nextDevice != null) { 
-//	          listOfRSSI.add(mScannedDevices.get(loop1).getRssi());
-//	          LogMessage("Adding scan RSSI to list: " + mScannedDevices.get(loop1).getRssi(), "i");
-//	        }
-//	      }
-//	    }
-//
-//	    return listOfRSSI;
-//	  }
-//
-//	  /**
-//	   * Allows to access a list of Devices found in the Scan
-//	   */
-//	  @SimpleProperty(description = "Lists the BLTE devices", category = PropertyCategory.BEHAVIOR)
-//	  public List<String> AddressesAndNames() { 
-//	    List<String> listOfBTLEDevices = new ArrayList<String>();
-//	    String deviceName;
-//	    BluetoothDevice nextDevice;
-//	    int foundCount = 0;
-//
-//	    if (mScannedDevices.size() == 0) {
-//	      listOfBTLEDevices.add("No devices found");
-//	      LogMessage("Did not find any devices to connect", "i");
-//	    } else { 
-//	      LogMessage("Finding names in " + mScannedDevices.size() + " devices", "i");
-//	      for (int loop1 = 0; loop1 < mScannedDevices.size(); loop1++) {
-//	        nextDevice = mScannedDevices.get(loop1).getDevice();
-//	        if (nextDevice != null) { 
-//	          //deviceName = GetDeviceNameAndAddress(nextDevice) + mScannedDevices.get(loop1).getScanRecord();
-//	          deviceName = GetDeviceNameAndAddress(nextDevice);
-//	          listOfBTLEDevices.add(deviceName);
-//	          foundCount++;
-//	        }
-//	      }
-//	      if (foundCount == 0) {
-//	        listOfBTLEDevices.add("All devices are null");
-//	      }
-//	    }
-//
-//	    return listOfBTLEDevices;
-//	  }
-//
-//	  /**  URGENT -- missing all the onResume() onPause() onStop() methods to cleanup
-//	   *   the connections during Life-cycle of app
-//	   *
-//	   *
-//	   */
-//
-//	  // 
-//	  public void onResume() {
-//	    LogMessage("Resuming the WICED Sense component", "i");
-//	  }
-//
-//	  public void onPause() {
-//	    LogMessage("Calling onPause()", "i");
-//	    //Log.d(TAG, "OnPause method started.");
-//	    //if (nfcAdapter != null) {
-//	    //  GingerbreadUtil.disableNFCAdapter(activity, nfcAdapter);
-//	    //}
-//	    //nfcAdapter.disableForegroundDispatch(activity);
-//	  }
-//
-//	  @Override
-//	  public void onDelete() {
-//	    LogMessage("Deleting the WICED Sense component", "i");
-//	    if (mBluetoothGatt != null) { 
-//	      mBluetoothGatt.close();
-//	    }
-//	  }
-//
-//	  @Override
-//	  public void onStop() {
-//	    LogMessage("Calling onStop()", "i");
-//
-//	    // Force a disconnect on Stop
-//	    if (mRunInBackground) { 
-//	      LogMessage("Continuing to run in the background", "i");
-//	    } else { 
-//	      LogMessage("Auto-disconnecting device from onStop()", "i");
-//	      Disconnect();
-//	    }
-//
-//	  }
+
+	  /**
+	   * Returns a list of the Gatt services
+	   */
+	  @SimpleProperty(description = "Lists the BLTE GATT Services", category = PropertyCategory.BEHAVIOR)
+	  public List<String> DeviceServices() { 
+	    List<String> listOfServices = new ArrayList<String>();
+	    int numServices;
+	    BluetoothGattService mService;
+
+	    // number of services discovered
+	    numServices = mGattServices.size();
+
+	    // bail out if nothing found
+	    if (numServices == 0) { 
+	      listOfServices.add("No Services Found");
+	      LogMessage("Did not find any Services", "i");
+	    } else { 
+	      LogMessage("Found " + numServices + " services", "i");
+	      for (int loop1 = 0; loop1 < numServices; loop1++) {
+	        mService = mGattServices.get(loop1);
+	        if (mService != null) { 
+	          listOfServices.add(mService.getUuid().toString());
+	        }
+	      }
+	    }
+	  
+	    return listOfServices;
+	  }
+
+	  /**
+	   * Allows to access of scan records found in the Scan
+	   */
+	  @SimpleProperty(description = "Lists the scan record of all BLTE devices find in scan", category = PropertyCategory.BEHAVIOR)
+	  public List<String> ScanRecords() { 
+	    List<String> listOfScanRecords = new ArrayList<String>();
+	    BluetoothDevice nextDevice;
+
+	    if (mScannedDevices.size() == 0) {
+	      LogMessage("Did not find any devices in scan", "i");
+	    } else { 
+	      for (int loop1 = 0; loop1 < mScannedDevices.size(); loop1++) {
+	        nextDevice = mScannedDevices.get(loop1).getDevice();
+	        if (nextDevice != null) { 
+	          listOfScanRecords.add(mScannedDevices.get(loop1).getScanRecord());
+	          LogMessage("Adding scan record to list: " + mScannedDevices.get(loop1).getScanRecord(), "i");
+	        }
+	      }
+	    }
+
+	    return listOfScanRecords;
+	  }
+
+	  /**
+	   * Allows to access of RSSI found in scan
+	   */
+	  @SimpleProperty(description = "Lists the RSSI of all BLTE devices find in scan", category = PropertyCategory.BEHAVIOR)
+	  public List<Integer> ScanRSSI() { 
+	    List<Integer> listOfRSSI = new ArrayList<Integer>();
+	    BluetoothDevice nextDevice;
+
+	    if (mScannedDevices.size() == 0) {
+	      LogMessage("Did not find any devices in scan", "i");
+	    } else { 
+	      for (int loop1 = 0; loop1 < mScannedDevices.size(); loop1++) {
+	        nextDevice = mScannedDevices.get(loop1).getDevice();
+	        if (nextDevice != null) { 
+	          listOfRSSI.add(mScannedDevices.get(loop1).getRssi());
+	          LogMessage("Adding scan RSSI to list: " + mScannedDevices.get(loop1).getRssi(), "i");
+	        }
+	      }
+	    }
+
+	    return listOfRSSI;
+	  }
+
+	  /**
+	   * Allows to access a list of Devices found in the Scan
+	   */
+	  @SimpleProperty(description = "Lists the BLTE devices", category = PropertyCategory.BEHAVIOR)
+	  public List<String> AddressesAndNames() { 
+	    List<String> listOfBTLEDevices = new ArrayList<String>();
+	    String deviceName;
+	    BluetoothDevice nextDevice;
+	    int foundCount = 0;
+
+	    if (mScannedDevices.size() == 0) {
+	      listOfBTLEDevices.add("No devices found");
+	      LogMessage("Did not find any devices to connect", "i");
+	    } else { 
+	      LogMessage("Finding names in " + mScannedDevices.size() + " devices", "i");
+	      for (int loop1 = 0; loop1 < mScannedDevices.size(); loop1++) {
+	        nextDevice = mScannedDevices.get(loop1).getDevice();
+	        if (nextDevice != null) { 
+	          //deviceName = GetDeviceNameAndAddress(nextDevice) + mScannedDevices.get(loop1).getScanRecord();
+	          deviceName = GetDeviceNameAndAddress(nextDevice);
+	          listOfBTLEDevices.add(deviceName);
+	          foundCount++;
+	        }
+	      }
+	      if (foundCount == 0) {
+	        listOfBTLEDevices.add("All devices are null");
+	      }
+	    }
+
+	    return listOfBTLEDevices;
+	  }
+
+	  /**  URGENT -- missing all the onResume() onPause() onStop() methods to cleanup
+	   *   the connections during Life-cycle of app
+	   *
+	   *
+	   */
+
+	  // 
+	  public void onResume() {
+	    LogMessage("Resuming the WICED Sense component", "i");
+	  }
+
+	  public void onPause() {
+	    LogMessage("Calling onPause()", "i");
+	    //Log.d(TAG, "OnPause method started.");
+	    //if (nfcAdapter != null) {
+	    //  GingerbreadUtil.disableNFCAdapter(activity, nfcAdapter);
+	    //}
+	    //nfcAdapter.disableForegroundDispatch(activity);
+	  }
+
+	  @Override
+	  public void onDelete() {
+	    LogMessage("Deleting the WICED Sense component", "i");
+	    if (mBluetoothGatt != null) { 
+	      mBluetoothGatt.close();
+	    }
+	  }
+
+	  @Override
+	  public void onStop() {
+	    LogMessage("Calling onStop()", "i");
+
+	    // Force a disconnect on Stop
+	    if (mRunInBackground) { 
+	      LogMessage("Continuing to run in the background", "i");
+	    } else { 
+	      LogMessage("Auto-disconnecting device from onStop()", "i");
+	      Disconnect();
+	    }
+
+	  }
 
 	}
