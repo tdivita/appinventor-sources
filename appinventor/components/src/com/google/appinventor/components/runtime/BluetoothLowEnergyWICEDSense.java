@@ -50,7 +50,6 @@
 //*
 //* @author  David Garrett (not the violinist)
 //*/
-////TODO: Get BaseClass working in AI, then start moving stuff into here and seeing if this keeps working.
 //
 //@DesignerComponent(version = YaVersion.BTLE_WICEDSENSE_COMPONENT_VERSION,
 ////category = ComponentCategory.CONNECTIVITY,
@@ -136,7 +135,7 @@ import java.util.UUID;
 @UsesPermissions(permissionNames = 
 "android.permission.BLUETOOTH, " + 
 		"android.permission.BLUETOOTH_ADMIN")
-public final class BluetoothLowEnergyWICEDSense extends BluetoothLowEnergyBaseClass
+public final class BluetoothLowEnergyWICEDSense extends BluetoothLowEnergySensorBase
 implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deleteable {
 
 	//private static final String LOG_TAG = "WICEDSense";
@@ -183,12 +182,12 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	//
 	////Holds Battery level
 	//private int mBatteryLevel = -1;
-	//
-	////Holds time stamp data
-	//private long startTime = 0;
-	//private long currentTime = 0;
-	//private long tempCurrentTime = 0;
-	//
+	
+	//Holds time stamp data
+	private long startTime = 0;
+	private long currentTime = 0;
+	private long tempCurrentTime = 0;
+	
 	////Holds the sensor data
 	//private float mXAccel = 0;
 	//private float mYAccel = 0;
@@ -215,10 +214,6 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	///** Descriptor used to enable/disable notifications/indications */
 	//private static final UUID CLIENT_CONFIG_UUID = UUID
 	//  .fromString("00002902-0000-1000-8000-00805f9b34fb");
-	//private static final UUID SENSOR_SERVICE_UUID = UUID
-	//  .fromString("739298B6-87B6-4984-A5DC-BDC18B068985");
-	//private static final UUID SENSOR_NOTIFICATION_UUID = UUID
-	//  .fromString("33EF9113-3B55-413E-B553-FEA1EAADA459");
 	//private static final UUID BATTERY_SERVICE_UUID = UUID
 	//  .fromString("0000180F-0000-1000-8000-00805f9b34fb");
 	//private static final UUID BATTERY_LEVEL_UUID = UUID
@@ -232,15 +227,18 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	 */
 	public BluetoothLowEnergyWICEDSense (ComponentContainer container) {
 		super(container.$form());
+		LOG_TAG = "WICEDSense";
+		SENSOR_SERVICE_UUID = UUID.fromString("739298B6-87B6-4984-A5DC-BDC18B068985");
+		SENSOR_NOTIFICATION_UUID = UUID.fromString("33EF9113-3B55-413E-B553-FEA1EAADA459");
 		//activity = container.$context();
 		//
 		//// names the function
 		//String functionName = "WICEDSense";
 		//
-		//// record the constructor time
-		//startTime  = System.nanoTime();
-		//currentTime  = startTime;
-		//tempCurrentTime  = startTime;
+		// record the constructor time
+		startTime  = System.nanoTime();
+		currentTime  = startTime;
+		tempCurrentTime  = startTime;
 		//
 		//// setup new list of devices
 		//mScannedDevices = new ArrayList<DeviceScanRecord>();
@@ -310,22 +308,22 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	//}
 
 
-	/** Log Messages */
-	private void CleanupBTLEState() { 
-
-		mConnectionState = STATE_DISCONNECTED;
-
-		// null out services
-		mSensorService = null;
-		mSensorNotification = null;
-		mBatteryService = null;
-		mBatteryCharacteristic = null;
-		mGattServices.clear();
-		validWICEDDevice = false;
-		mScannedDevices.clear();
-
-		LogMessage("Issuing a cleanup of the BTLE state", "i");
-	}
+//	/** Log Messages */
+//	private void CleanupBTLEState() { 
+//
+//		mConnectionState = STATE_DISCONNECTED;
+//
+//		// null out services
+//		mSensorService = null;
+//		mSensorNotification = null;
+//		mBatteryService = null;
+//		mBatteryCharacteristic = null;
+//		mGattServices.clear();
+//		validDevice = false;
+//		mScannedDevices.clear();
+//
+//		LogMessage("Issuing a cleanup of the BTLE state", "i");
+//	}
 
 	/** ----------------------------------------------------------------------
 	 *  BTLE Code Section
@@ -465,153 +463,9 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	//return new String(hexChars);
 	//}
 
+	// TODO: Make this set the base variable properly.
 	/** Various callback methods defined by the BLE API. */
-	private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
-		@Override
-		public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
-			LogMessage("onConnectionStateChange callback with status = " + status, "i");
-
-			//String intentAction;
-			if (newState == BluetoothProfile.STATE_CONNECTED) {
-				mConnectionState = STATE_NEED_SERVICES;
-
-				// Trigger device discovery 
-				LogMessage("Connected to BLTE device, starting service discovery", "i");
-				boolean success = mBluetoothGatt.discoverServices();
-				if (!success) { 
-					LogMessage("Cannot start service discovery for some reason", "e");
-				}
-				// Finalizing the disconnect profile
-			} else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
-				mConnectionState = STATE_DISCONNECTED;
-
-				// close out connection
-				//     mBluetoothGatt.close();
-
-				// null out services
-				mSensorService = null;
-				mSensorNotification = null;
-				mBatteryService = null;
-				mBatteryCharacteristic = null;
-				mGattServices.clear();
-
-				LogMessage("Disconnected from BLTE device", "i");
-			}
-		}
-
-		@Override
-		// New services discovered
-		public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
-			LogMessage("onReadRemoteRssi callback with status = " + status, "i");
-
-			deviceRssi = rssi;
-			LogMessage("Updating RSSI from remove device = " + rssi + " dBm", "i");
-
-			// update RSSI
-			//RSSIUpdated();
-		}
-
-		@Override
-		// New services discovered
-		public void onServicesDiscovered(BluetoothGatt gatt, int status) {
-
-			LogMessage("onServicesDiscovered callback with status = " + status, "i");
-
-			if (status == BluetoothGatt.GATT_SUCCESS) {
-				// record services 
-				mGattServices = gatt.getServices();
-				validWICEDDevice = true;
-
-				// update connection state
-				if (mConnectionState == STATE_NEED_SERVICES) { 
-					mConnectionState = STATE_CONNECTED;
-				}
-
-				// log message
-				LogMessage("Found " + mGattServices.size() + " Device services", "i");
-
-				// Match to sensor services
-				BluetoothGattService mService;
-				for (int loop1 = 0; loop1 < mGattServices.size(); loop1++) {
-					mService = mGattServices.get(loop1);
-					// get battery service
-					if (BATTERY_SERVICE_UUID.equals(mService.getUuid())) { 
-						mBatteryService = mService;
-						mBatteryCharacteristic = mBatteryService.getCharacteristic(BATTERY_LEVEL_UUID);
-					} 
-					// get the sensor service
-					if (SENSOR_SERVICE_UUID.equals(mService.getUuid())) { 
-						mSensorService = mService;
-						mSensorNotification = mSensorService.getCharacteristic(SENSOR_NOTIFICATION_UUID);
-					} 
-				}
-
-				// Check for VALID WICED service
-				validWICEDDevice = true;
-				if (mBatteryService == null) { validWICEDDevice = false; }
-				if (mBatteryCharacteristic == null) { validWICEDDevice = false; }
-				if (mSensorService == null) { validWICEDDevice = false; }
-				if (mSensorNotification == null) { validWICEDDevice = false; }
-
-				// Warnings if not valid
-				if (validWICEDDevice) { 
-					LogMessage("Found services on WICED Sense device", "i");
-				} else { 
-					LogMessage("Connected device is not a WICED Sense kit", "e");
-				}
-
-				// Set the sensor state directly
-				setSensorState();
-
-				// Triggers callback for connected device
-				//Connected();
-			} else {
-				LogMessage("onServicesDiscovered received but failed", "e");
-			}
-		}
-
-		@Override
-		// Result of a characteristic read operation
-		public void onCharacteristicRead(BluetoothGatt gatt, 
-				BluetoothGattCharacteristic characteristic, 
-				int status) {
-			if (status == BluetoothGatt.GATT_SUCCESS) {
-				if (BATTERY_LEVEL_UUID.equals(characteristic.getUuid())) {
-					try {
-						mBatteryLevel = characteristic.getIntValue(
-								BluetoothGattCharacteristic.FORMAT_UINT8, 0);
-						LogMessage("Read battery level " + mBatteryLevel + "%", "i");
-
-						// trigger event
-						//BatteryLevelUpdated();
-					} catch (Exception e) {
-						LogMessage("Unable to read battery level.", "e");
-						return;
-					}
-				}
-			} else {
-				LogMessage("Failure in reading Gatt Characteristics", "e");
-			}
-		}
-
-		@Override
-		public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
-
-			LogMessage("onDescriptorWrite with status = " + status, "i");
-			if (mSensorNotification == null) {
-				LogMessage("onDescriptorWrite: mSensorNotification == null", "e");
-				return;
-			}
-
-			// set the enable value
-			boolean success = mBluetoothGatt.setCharacteristicNotification(mSensorNotification, mSensorsEnabled);
-			if (success) {
-				LogMessage("Was able to write sensor notification characteristics", "i");
-			} else { 
-				LogMessage("Failed to write sensor notification characteristic", "e");
-			}
-		}
-
+	private final BLESensorBaseBluetoothGattCallback mGattCallback = new BLESensorBaseBluetoothGattCallback() {
 		@Override
 		public void onCharacteristicChanged(BluetoothGatt gatt,
 				BluetoothGattCharacteristic characteristic) {
@@ -743,31 +597,31 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	 *   ----------------------------------------------------------------------
 	 */
 
-	/**
-	 * Allows the user to check battery level
-	 */
-	@SimpleFunction(description = "Reads WICED Sense kit battery level.")
-	public void ReadBatteryLevel() { 
-		String functionName = "ReadBatteryLevel";
-		if (mConnectionState == STATE_CONNECTED) { 
-			if (validWICEDDevice) { 
-				if (mBatteryCharacteristic == null) { 
-					LogMessage("Reading null battery characteristic", "e");
-				} else { 
-					boolean success = mBluetoothGatt.readCharacteristic(mBatteryCharacteristic);
-					if (success) { 
-						LogMessage("Reading battery characteristic", "i");
-					} else { 
-						LogMessage("Reading battery characteristic failed", "e");
-					}
-				}
-			} else { 
-				LogMessage("Trying to reading battery without a WICED Sense device", "e");
-			}
-		} else { 
-			LogMessage("Trying to reading battery before connected", "e");
-		}
-	}
+//	/**
+//	 * Allows the user to check battery level
+//	 */
+//	@SimpleFunction(description = "Reads WICED Sense kit battery level.")
+//	public void ReadBatteryLevel() { 
+//		String functionName = "ReadBatteryLevel";
+//		if (mConnectionState == STATE_CONNECTED) { 
+//			if (validDevice) { 
+//				if (mBatteryCharacteristic == null) { 
+//					LogMessage("Reading null battery characteristic", "e");
+//				} else { 
+//					boolean success = mBluetoothGatt.readCharacteristic(mBatteryCharacteristic);
+//					if (success) { 
+//						LogMessage("Reading battery characteristic", "i");
+//					} else { 
+//						LogMessage("Reading battery characteristic failed", "e");
+//					}
+//				}
+//			} else { 
+//				LogMessage("Trying to reading battery without a WICED Sense device", "e");
+//			}
+//		} else { 
+//			LogMessage("Trying to reading battery before connected", "e");
+//		}
+//	}
 
 	///**
 	//* Allows the user to start the scan
@@ -824,52 +678,52 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	 *   ----------------------------------------------------------------------
 	 */
 
-	/** Gets Battery Level */
-	@SimpleProperty(description = "Returns the battery level.", 
-			category = PropertyCategory.BEHAVIOR,
-			userVisible = true)
-	public int BatteryLevel() {
-		return mBatteryLevel;
-	}
-
-	/** Checks we have found services on the device */
-	@SimpleProperty(description = "Queries if Device Services have been discoverd", 
-			category = PropertyCategory.BEHAVIOR,
-			userVisible = true)
-	public boolean FoundServices() {
-		if (mConnectionState == STATE_CONNECTED) { 
-			return true;
-		} else { 
-			return false;
-		}
-	}
-
-	/** Makes sure GATT profile is connected */
-	@SimpleProperty(description = "Queries Connected state", 
-			category = PropertyCategory.BEHAVIOR,
-			userVisible = true)
-	public boolean IsConnected() {
-		if (mConnectionState == STATE_CONNECTED) {
-			return true;
-		} else { 
-			return false;
-		}
-	}
-
-	/** Returns the RSSI measurement from devices
-	 *
-	 *  Instantly returns the rssi on WICEDsene class variable
-	 *  but calls a Gatt callback that will update with the new 
-	 *  values on the callback (later in time)
-	 *
-	 *  Should consider callback "EVENT" to get accurate value
-	 */
-	@SimpleProperty(description = "Queries RSSI", 
-			category = PropertyCategory.BEHAVIOR,
-			userVisible = true)
-	public int RSSI() {
-		return deviceRssi;
-	}
+//	/** Gets Battery Level */
+//	@SimpleProperty(description = "Returns the battery level.", 
+//			category = PropertyCategory.BEHAVIOR,
+//			userVisible = true)
+//	public int BatteryLevel() {
+//		return mBatteryLevel;
+//	}
+//
+//	/** Checks we have found services on the device */
+//	@SimpleProperty(description = "Queries if Device Services have been discoverd", 
+//			category = PropertyCategory.BEHAVIOR,
+//			userVisible = true)
+//	public boolean FoundServices() {
+//		if (mConnectionState == STATE_CONNECTED) { 
+//			return true;
+//		} else { 
+//			return false;
+//		}
+//	}
+//
+//	/** Makes sure GATT profile is connected */
+//	@SimpleProperty(description = "Queries Connected state", 
+//			category = PropertyCategory.BEHAVIOR,
+//			userVisible = true)
+//	public boolean IsConnected() {
+//		if (mConnectionState == STATE_CONNECTED) {
+//			return true;
+//		} else { 
+//			return false;
+//		}
+//	}
+//
+//	/** Returns the RSSI measurement from devices
+//	 *
+//	 *  Instantly returns the rssi on WICEDsene class variable
+//	 *  but calls a Gatt callback that will update with the new 
+//	 *  values on the callback (later in time)
+//	 *
+//	 *  Should consider callback "EVENT" to get accurate value
+//	 */
+//	@SimpleProperty(description = "Queries RSSI", 
+//			category = PropertyCategory.BEHAVIOR,
+//			userVisible = true)
+//	public int RSSI() {
+//		return deviceRssi;
+//	}
 
 	/**
 	 * Returns text log
@@ -881,18 +735,18 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	//return mLogMessage;
 	//}
 
-	/**
-	 * Allows the user to Read remote RSSI
-	 */
-	@SimpleFunction(description = "Forces read of remote RSSI")
-	public void ReadRSSI() { 
-		String functionName = "ReadRSSI";
-		if (mConnectionState == STATE_CONNECTED) { 
-			mBluetoothGatt.readRemoteRssi();
-		} else { 
-			LogMessage("Trying to read RSSI without a connected device", "e");
-		}
-	}
+//	/**
+//	 * Allows the user to Read remote RSSI
+//	 */
+//	@SimpleFunction(description = "Forces read of remote RSSI")
+//	public void ReadRSSI() { 
+//		String functionName = "ReadRSSI";
+//		if (mConnectionState == STATE_CONNECTED) { 
+//			mBluetoothGatt.readRemoteRssi();
+//		} else { 
+//			LogMessage("Trying to read RSSI without a connected device", "e");
+//		}
+//	}
 
 //	/**
 //	 * Allows the user to disconnect

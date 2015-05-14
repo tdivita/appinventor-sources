@@ -60,10 +60,10 @@ import java.util.UUID;
 //              "android.permission.BLUETOOTH, " + 
 //              "android.permission.BLUETOOTH_ADMIN")
 
-public abstract class BluetoothLowEnergyBaseClass extends AndroidNonvisibleComponent 
+public abstract class BluetoothLowEnergySensorBase extends AndroidNonvisibleComponent 
 implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deleteable {
 
-	  protected static final String LOG_TAG = "BTLEWICEDSense";
+	  protected static String LOG_TAG = "BTLEDevice";
 	  protected final Activity activity;
 
 	  // if constructor finds enabled BTLE device, this is set
@@ -98,8 +98,9 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  // holds current connection state
 	  protected int mConnectionState = STATE_DISCONNECTED;
 
+	  // TODO: Look at what happens if they have more than battery and sensor service
 	  // Holds specific WICED services
-	  protected boolean validWICEDDevice = false;
+	  protected boolean validDevice = false;
 	  protected BluetoothGattService mSensorService = null;
 	  protected BluetoothGattCharacteristic mSensorNotification = null;
 	  protected BluetoothGattService mBatteryService = null;
@@ -108,10 +109,11 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  // Holds Battery level
 	  protected int mBatteryLevel = -1;
 
-	  // Holds time stamp data
-	  protected long startTime = 0;
-	  protected long currentTime = 0;
-	  protected long tempCurrentTime = 0;
+	  // TODO: Remove from base class
+//	  // Holds time stamp data
+//	  protected long startTime = 0;
+//	  protected long currentTime = 0;
+//	  protected long tempCurrentTime = 0;
 
 	  // Holds the sensor data
 	  protected float mXAccel = 0;
@@ -139,10 +141,9 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  /** Descriptor used to enable/disable notifications/indications */
 	  protected static final UUID CLIENT_CONFIG_UUID = UUID
 	          .fromString("00002902-0000-1000-8000-00805f9b34fb");
-	  protected static final UUID SENSOR_SERVICE_UUID = UUID
-	          .fromString("739298B6-87B6-4984-A5DC-BDC18B068985");
-	  protected static final UUID SENSOR_NOTIFICATION_UUID = UUID
-	          .fromString("33EF9113-3B55-413E-B553-FEA1EAADA459");
+	  // TODO: Remove from base class (just values); may need some null handling? (but they need to do it)
+	  protected static UUID SENSOR_SERVICE_UUID; // = UUID.fromString("739298B6-87B6-4984-A5DC-BDC18B068985");
+	  protected static UUID SENSOR_NOTIFICATION_UUID; // = UUID.fromString("33EF9113-3B55-413E-B553-FEA1EAADA459");
 	  protected static final UUID BATTERY_SERVICE_UUID = UUID
 	          .fromString("0000180F-0000-1000-8000-00805f9b34fb");
 	  protected static final UUID BATTERY_LEVEL_UUID = UUID
@@ -154,17 +155,17 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	   *
 	   * @param container the enclosing component
 	   */
-	  public BluetoothLowEnergyBaseClass (ComponentContainer container) {
+	  public BluetoothLowEnergySensorBase (ComponentContainer container) {
 	    super(container.$form());
 	    activity = container.$context();
 
 	    // names the function
-	    String functionName = "BTLEWICEDSense";
+	    String functionName = "BTLEDevice";
 
-	    // record the constructor time
-	    startTime  = System.nanoTime();
-	    currentTime  = startTime;
-	    tempCurrentTime  = startTime;
+//	    // record the constructor time
+//	    startTime  = System.nanoTime();
+//	    currentTime  = startTime;
+//	    tempCurrentTime  = startTime;
 
 	    // setup new list of devices
 	    mScannedDevices = new ArrayList<DeviceScanRecord>();
@@ -187,7 +188,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	      LogMessage("No Valid BTLE Device on platform", "e");
 
 	      /** issues message to reader */
-	      form.dispatchErrorOccurredEvent(this, "BTLEWICEDSense",
+	      form.dispatchErrorOccurredEvent(this, "BTLEDevice",
 	          ErrorMessages.ERROR_BLUETOOTH_NOT_ENABLED);
 
 	    } else { 
@@ -231,25 +232,25 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	      }
 	    }
 	  }
-//
-//
-//	  /** Log Messages */
-//	  private void CleanupBTLEState() { 
-//
-//	    mConnectionState = STATE_DISCONNECTED;
-//
-//	    // null out services
-//	    mSensorService = null;
-//	    mSensorNotification = null;
-//	    mBatteryService = null;
-//	    mBatteryCharacteristic = null;
-//	    mGattServices.clear();
-//	    validWICEDDevice = false;
-//	    mScannedDevices.clear();
-//
-//	    LogMessage("Issuing a cleanup of the BTLE state", "i");
-//	  }
-//
+
+
+	  /** Log Messages */
+	  protected void CleanupBTLEState() { 
+
+	    mConnectionState = STATE_DISCONNECTED;
+
+	    // null out services
+	    mSensorService = null;
+	    mSensorNotification = null;
+	    mBatteryService = null;
+	    mBatteryCharacteristic = null;
+	    mGattServices.clear();
+	    validDevice = false;
+	    mScannedDevices.clear();
+
+	    LogMessage("Issuing a cleanup of the BTLE state", "i");
+	  }
+
 	  /** ----------------------------------------------------------------------
 	   *  BTLE Code Section
 	   *  ----------------------------------------------------------------------
@@ -300,7 +301,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  public void setSensorState() { 
 
 	    // Fire off characteristic 
-	    if (validWICEDDevice) { 
+	    if (validDevice) { 
 
 	      // Write the characteristic
 	      if (mSensorNotification == null) { 
@@ -387,13 +388,9 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	    }
 	    return new String(hexChars);
 	  }
-
-	  // TODO: Remove specific parts.
-	  // TODO: Make sure this gets overridden correctly for WICED component. Oh wait it's all in a constructor...?
-	  // TODO: Make a protected class that subclasses BluetoothGattCallback, I think.
-	  /** Various callback methods defined by the BLE API. */
-	  private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {
-	        @Override
+	  
+	  protected class BLESensorBaseBluetoothGattCallback extends BluetoothGattCallback{
+		  @Override
 	        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
 	          LogMessage("onConnectionStateChange callback with status = " + status, "i");
 
@@ -424,8 +421,8 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	             LogMessage("Disconnected from BLTE device", "i");
 	          }
 	        }
-
-	        @Override
+		  
+		  @Override
 	        // New services discovered
 	        public void onReadRemoteRssi(BluetoothGatt gatt, int rssi, int status) {
 	          LogMessage("onReadRemoteRssi callback with status = " + status, "i");
@@ -436,9 +433,8 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	          // update RSSI
 	          //RSSIUpdated();
 	        }
-	        
-	        // TODO: Override in WICED subclass.
-	        @Override
+		  
+		  @Override
 	        // New services discovered
 	        public void onServicesDiscovered(BluetoothGatt gatt, int status) {
 
@@ -447,7 +443,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	          if (status == BluetoothGatt.GATT_SUCCESS) {
 	            // record services 
 	            mGattServices = gatt.getServices();
-	            validWICEDDevice = true;
+	            validDevice = true;
 
 	            // update connection state
 	            if (mConnectionState == STATE_NEED_SERVICES) { 
@@ -474,17 +470,17 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	            }
 
 	            // Check for VALID WICED service
-	            validWICEDDevice = true;
-	            if (mBatteryService == null) { validWICEDDevice = false; }
-	            if (mBatteryCharacteristic == null) { validWICEDDevice = false; }
-	            if (mSensorService == null) { validWICEDDevice = false; }
-	            if (mSensorNotification == null) { validWICEDDevice = false; }
+	            validDevice = true;
+	            if (mBatteryService == null) { validDevice = false; }
+	            if (mBatteryCharacteristic == null) { validDevice = false; }
+	            if (mSensorService == null) { validDevice = false; }
+	            if (mSensorNotification == null) { validDevice = false; }
 
 	            // Warnings if not valid
-	            if (validWICEDDevice) { 
-	              LogMessage("Found services on WICED Sense device", "i");
+	            if (validDevice) { 
+	              LogMessage("Found services on valid sensor device", "i");
 	            } else { 
-	              LogMessage("Connected device is not a WICED Sense kit", "e");
+	              LogMessage("Connected device is not the right type of device", "e");
 	            }
 
 	            // Set the sensor state directly
@@ -496,9 +492,8 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	            LogMessage("onServicesDiscovered received but failed", "e");
 	          }
 	        }
-
-	        // TODO: Figure out whether battery level is universal.
-	        @Override
+		  
+		  @Override
 	        // Result of a characteristic read operation
 	        public void onCharacteristicRead(BluetoothGatt gatt, 
 	                                         BluetoothGattCharacteristic characteristic, 
@@ -539,62 +534,70 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	            LogMessage("Failed to write sensor notification characteristic", "e");
 	           }
 	        }
+	  }
 
-	        // TODO: Override in WICED subclass.
-	        @Override
-	        public void onCharacteristicChanged(BluetoothGatt gatt,
-	                         BluetoothGattCharacteristic characteristic) {
-	          if (SENSOR_NOTIFICATION_UUID.equals(characteristic.getUuid())) {
-	            byte[] value = characteristic.getValue();
-	            int bitMask = value[0];
-	            int index = 1;
-
-	            // Update timestamp
-	            currentTime = System.nanoTime();
-
-	            if ((bitMask & 0x1)>0) { 
-	              mXAccel = (value[index+1] << 8) + (value[  index] & 0xFF);
-	              mYAccel = (value[index+3] << 8) + (value[index+2] & 0xFF);
-	              mZAccel = (value[index+5] << 8) + (value[index+4] & 0xFF);
-	              index = index + 6;
-	            }
-	            if ((bitMask & 0x2)>0) { 
-	              mXGyro = (value[index+1] << 8) + (value[  index] & 0xFF);
-	              mYGyro = (value[index+3] << 8) + (value[index+2] & 0xFF);
-	              mZGyro = (value[index+5] << 8) + (value[index+4] & 0xFF);
-	              mXGyro = mXGyro / (float)100.0;
-	              mYGyro = mYGyro / (float)100.0;
-	              mZGyro = mZGyro / (float)100.0;
-	              index = index + 6;
-	            }
-	            if ((bitMask & 0x4)>0) { 
-	              mHumidity =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
-	              mHumidity = mHumidity / (float)10.0;
-	              index = index + 2;
-	            }
-	            if ((bitMask & 0x8)>0) { 
-	              mXMagnetometer = (value[index+1] << 8) + (value[  index] & 0xFF);
-	              mYMagnetometer = (value[index+3] << 8) + (value[index+2] & 0xFF);
-	              mZMagnetometer = (value[index+5] << 8) + (value[index+4] & 0xFF);
-	              index = index + 6;
-	            }
-	            if ((bitMask & 0x10)>0) { 
-	              mPressure =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
-	              mPressure = mPressure / (float)10.0;
-	              index = index + 2;
-	            }
-	            if ((bitMask & 0x20)>0) { 
-	              mTemperature =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
-	              mTemperature = mTemperature / (float)10.0;
-	              index = index + 2;
-	              tempCurrentTime = System.nanoTime();
-	            }
-
-	            LogMessage("Reading back sensor data with type " + bitMask + " packet", "i");
-	            //SensorsUpdated();
-	          }
-	        }
-	   };
+	  // TODO: Remove specific parts.
+	  // TODO: Make sure this gets overridden correctly for WICED component. Oh wait it's all in a constructor...?
+	  // TODO: Make a protected class that subclasses BluetoothGattCallback, I think.
+	  /** Various callback methods defined by the BLE API. */
+	  // Initialize in the any subclass, and override the onCharacteristicChanged method.
+	  protected BLESensorBaseBluetoothGattCallback mGattCallback;
+//	  private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {	        
+//	        // TODO: Override in WICED subclass.
+//	        @Override
+//	        public void onCharacteristicChanged(BluetoothGatt gatt,
+//	                         BluetoothGattCharacteristic characteristic) {
+//	          if (SENSOR_NOTIFICATION_UUID.equals(characteristic.getUuid())) {
+//	            byte[] value = characteristic.getValue();
+//	            int bitMask = value[0];
+//	            int index = 1;
+//
+//	            // Update timestamp
+//	            currentTime = System.nanoTime();
+//
+//	            if ((bitMask & 0x1)>0) { 
+//	              mXAccel = (value[index+1] << 8) + (value[  index] & 0xFF);
+//	              mYAccel = (value[index+3] << 8) + (value[index+2] & 0xFF);
+//	              mZAccel = (value[index+5] << 8) + (value[index+4] & 0xFF);
+//	              index = index + 6;
+//	            }
+//	            if ((bitMask & 0x2)>0) { 
+//	              mXGyro = (value[index+1] << 8) + (value[  index] & 0xFF);
+//	              mYGyro = (value[index+3] << 8) + (value[index+2] & 0xFF);
+//	              mZGyro = (value[index+5] << 8) + (value[index+4] & 0xFF);
+//	              mXGyro = mXGyro / (float)100.0;
+//	              mYGyro = mYGyro / (float)100.0;
+//	              mZGyro = mZGyro / (float)100.0;
+//	              index = index + 6;
+//	            }
+//	            if ((bitMask & 0x4)>0) { 
+//	              mHumidity =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
+//	              mHumidity = mHumidity / (float)10.0;
+//	              index = index + 2;
+//	            }
+//	            if ((bitMask & 0x8)>0) { 
+//	              mXMagnetometer = (value[index+1] << 8) + (value[  index] & 0xFF);
+//	              mYMagnetometer = (value[index+3] << 8) + (value[index+2] & 0xFF);
+//	              mZMagnetometer = (value[index+5] << 8) + (value[index+4] & 0xFF);
+//	              index = index + 6;
+//	            }
+//	            if ((bitMask & 0x10)>0) { 
+//	              mPressure =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
+//	              mPressure = mPressure / (float)10.0;
+//	              index = index + 2;
+//	            }
+//	            if ((bitMask & 0x20)>0) { 
+//	              mTemperature =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
+//	              mTemperature = mTemperature / (float)10.0;
+//	              index = index + 2;
+//	              tempCurrentTime = System.nanoTime();
+//	            }
+//
+//	            LogMessage("Reading back sensor data with type " + bitMask + " packet", "i");
+//	            //SensorsUpdated();
+//	          }
+//	        }
+//	   };
 //
 //
 //	  /* ----------------------------------------------------------------------
@@ -667,36 +670,36 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 ////	    EventDispatcher.dispatchEvent(this, "BatteryLevelUpdated");
 //	//  }
 //
-//	  /**  ----------------------------------------------------------------------
-//	   *   Function calls
-//	   *   ----------------------------------------------------------------------
-//	   */
-//
-//	  /**
-//	   * Allows the user to check battery level
-//	   */
-//	  @SimpleFunction(description = "Reads WICED Sense kit battery level.")
-//	  public void ReadBatteryLevel() { 
-//	    String functionName = "ReadBatteryLevel";
-//	    if (mConnectionState == STATE_CONNECTED) { 
-//	      if (validWICEDDevice) { 
-//	        if (mBatteryCharacteristic == null) { 
-//	          LogMessage("Reading null battery characteristic", "e");
-//	        } else { 
-//	          boolean success = mBluetoothGatt.readCharacteristic(mBatteryCharacteristic);
-//	          if (success) { 
-//	            LogMessage("Reading battery characteristic", "i");
-//	          } else { 
-//	            LogMessage("Reading battery characteristic failed", "e");
-//	          }
-//	        }
-//	      } else { 
-//	        LogMessage("Trying to reading battery without a WICED Sense device", "e");
-//	      }
-//	    } else { 
-//	      LogMessage("Trying to reading battery before connected", "e");
-//	    }
-//	  }
+	  /**  ----------------------------------------------------------------------
+	   *   Function calls
+	   *   ----------------------------------------------------------------------
+	   */
+
+	  /**
+	   * Allows the user to check battery level
+	   */
+	  @SimpleFunction(description = "Reads WICED Sense kit battery level.")
+	  public void ReadBatteryLevel() { 
+	    String functionName = "ReadBatteryLevel";
+	    if (mConnectionState == STATE_CONNECTED) { 
+	      if (validDevice) { 
+	        if (mBatteryCharacteristic == null) { 
+	          LogMessage("Reading null battery characteristic", "e");
+	        } else { 
+	          boolean success = mBluetoothGatt.readCharacteristic(mBatteryCharacteristic);
+	          if (success) { 
+	            LogMessage("Reading battery characteristic", "i");
+	          } else { 
+	            LogMessage("Reading battery characteristic failed", "e");
+	          }
+	        }
+	      } else { 
+	        LogMessage("Trying to reading battery without a device", "e");
+	      }
+	    } else { 
+	      LogMessage("Trying to reading battery before connected", "e");
+	    }
+	  }
 
 	  /**
 	   * Allows the user to start the scan
@@ -753,52 +756,52 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 //	   *   ----------------------------------------------------------------------
 //	   */
 //
-//	  /** Gets Battery Level */
-//	  @SimpleProperty(description = "Returns the battery level.", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public int BatteryLevel() {
-//	    return mBatteryLevel;
-//	  }
-//
-//	  /** Checks we have found services on the device */
-//	  @SimpleProperty(description = "Queries if Device Services have been discoverd", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public boolean FoundServices() {
-//	    if (mConnectionState == STATE_CONNECTED) { 
-//	      return true;
-//	    } else { 
-//	      return false;
-//	    }
-//	  }
-//
-//	  /** Makes sure GATT profile is connected */
-//	  @SimpleProperty(description = "Queries Connected state", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public boolean IsConnected() {
-//	    if (mConnectionState == STATE_CONNECTED) {
-//	      return true;
-//	    } else { 
-//	      return false;
-//	    }
-//	  }
-//
-//	  /** Returns the RSSI measurement from devices
-//	   *
-//	   *  Instantly returns the rssi on WICEDsene class variable
-//	   *  but calls a Gatt callback that will update with the new 
-//	   *  values on the callback (later in time)
-//	   *
-//	   *  Should consider callback "EVENT" to get accurate value
-//	   */
-//	  @SimpleProperty(description = "Queries RSSI", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public int RSSI() {
-//	    return deviceRssi;
-//	  }
+	  /** Gets Battery Level */
+	  @SimpleProperty(description = "Returns the battery level.", 
+	                  category = PropertyCategory.BEHAVIOR,
+	                  userVisible = true)
+	  public int BatteryLevel() {
+	    return mBatteryLevel;
+	  }
+
+	  /** Checks we have found services on the device */
+	  @SimpleProperty(description = "Queries if Device Services have been discoverd", 
+	                  category = PropertyCategory.BEHAVIOR,
+	                  userVisible = true)
+	  public boolean FoundServices() {
+	    if (mConnectionState == STATE_CONNECTED) { 
+	      return true;
+	    } else { 
+	      return false;
+	    }
+	  }
+
+	  /** Makes sure GATT profile is connected */
+	  @SimpleProperty(description = "Queries Connected state", 
+	                  category = PropertyCategory.BEHAVIOR,
+	                  userVisible = true)
+	  public boolean IsConnected() {
+	    if (mConnectionState == STATE_CONNECTED) {
+	      return true;
+	    } else { 
+	      return false;
+	    }
+	  }
+
+	  /** Returns the RSSI measurement from devices
+	   *
+	   *  Instantly returns the rssi on WICEDsene class variable
+	   *  but calls a Gatt callback that will update with the new 
+	   *  values on the callback (later in time)
+	   *
+	   *  Should consider callback "EVENT" to get accurate value
+	   */
+	  @SimpleProperty(description = "Queries RSSI", 
+	                  category = PropertyCategory.BEHAVIOR,
+	                  userVisible = true)
+	  public int RSSI() {
+	    return deviceRssi;
+	  }
 //
 //	  /**
 //	   * Returns text log
@@ -810,18 +813,18 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 ////	    return mLogMessage;
 //	//  }
 //
-//	  /**
-//	   * Allows the user to Read remote RSSI
-//	   */
-//	  @SimpleFunction(description = "Forces read of remote RSSI")
-//	  public void ReadRSSI() { 
-//	    String functionName = "ReadRSSI";
-//	    if (mConnectionState == STATE_CONNECTED) { 
-//	      mBluetoothGatt.readRemoteRssi();
-//	    } else { 
-//	      LogMessage("Trying to read RSSI without a connected device", "e");
-//	    }
-//	  }
+	  /**
+	   * Allows the user to Read remote RSSI
+	   */
+	  @SimpleFunction(description = "Forces read of remote RSSI")
+	  public void ReadRSSI() { 
+	    String functionName = "ReadRSSI";
+	    if (mConnectionState == STATE_CONNECTED) { 
+	      mBluetoothGatt.readRemoteRssi();
+	    } else { 
+	      LogMessage("Trying to read RSSI without a connected device", "e");
+	    }
+	  }
 
 	  /**
 	   * Allows the user to disconnect
@@ -981,10 +984,9 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 //	  }
 
 	  /**
-	   * Sets the temperature setting for Fahrenheit or Celsius
+	   * Sets whether BLE will run in the background.
 	   *
 	   */
-	  // TODO: Fix comment.
 	  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
 	                    defaultValue = "True")
 	  @SimpleProperty(description = "Keeps BTLE running in background", 
