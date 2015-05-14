@@ -537,8 +537,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  }
 
 	  // TODO: Remove specific parts.
-	  // TODO: Make sure this gets overridden correctly for WICED component. Oh wait it's all in a constructor...?
-	  // TODO: Make a protected class that subclasses BluetoothGattCallback, I think.
+	  // TODO: Make sure this gets overridden correctly for WICED component.
 	  /** Various callback methods defined by the BLE API. */
 	  // Initialize in the any subclass, and override the onCharacteristicChanged method.
 	  protected BLESensorBaseBluetoothGattCallback mGattCallback;
