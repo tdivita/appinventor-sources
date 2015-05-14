@@ -50,11 +50,7 @@ import java.util.UUID;
 *
 * @author  David Garrett (not the violinist)
 */
-//@DesignerComponent(version = YaVersion.WICEDSENSE_COMPONENT_VERSION,
-// category = ComponentCategory.SENSORS,
-// description = "The WICEDSense component is still experimental",
-// nonVisible = true,
-// iconName = "images/wicedSenseIcon.png")
+
 @SimpleObject
 //@UsesPermissions(permissionNames = 
 //              "android.permission.BLUETOOTH, " + 
@@ -105,32 +101,13 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  protected BluetoothGattCharacteristic mSensorNotification = null;
 	  protected BluetoothGattService mBatteryService = null;
 	  protected BluetoothGattCharacteristic mBatteryCharacteristic = null;
+	  
+	  // Initialize in any subclass, and override the onCharacteristicChanged method.
+	  protected BLESensorBaseBluetoothGattCallback mGattCallback;
 
 	  // Holds Battery level
 	  protected int mBatteryLevel = -1;
 
-	  // TODO: Remove from base class
-//	  // Holds time stamp data
-//	  protected long startTime = 0;
-//	  protected long currentTime = 0;
-//	  protected long tempCurrentTime = 0;
-
-	  // Holds the sensor data
-	  protected float mXAccel = 0;
-	  protected float mYAccel = 0;
-	  protected float mZAccel = 0;
-	  protected float mXGyro = 0;
-	  protected float mYGyro = 0;
-	  protected float mZGyro = 0;
-	  protected float mXMagnetometer = 0;
-	  protected float mYMagnetometer = 0;
-	  protected float mZMagnetometer = 0;
-	  protected float mHumidity = 0;
-	  protected float mPressure = 0;
-	  protected float mTemperature = 0;
-
-	  // set default temperature setting
-	  protected boolean mUseFahrenheit = true;
 	  protected boolean mRunInBackground = true;
 	  
 	  // Defines BTLE States
@@ -141,9 +118,9 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  /** Descriptor used to enable/disable notifications/indications */
 	  protected static final UUID CLIENT_CONFIG_UUID = UUID
 	          .fromString("00002902-0000-1000-8000-00805f9b34fb");
-	  // TODO: Remove from base class (just values); may need some null handling? (but they need to do it)
-	  protected static UUID SENSOR_SERVICE_UUID; // = UUID.fromString("739298B6-87B6-4984-A5DC-BDC18B068985");
-	  protected static UUID SENSOR_NOTIFICATION_UUID; // = UUID.fromString("33EF9113-3B55-413E-B553-FEA1EAADA459");
+	  // The service UUIDs must be defined in the constructor of any subclass.
+	  protected static UUID SENSOR_SERVICE_UUID;
+	  protected static UUID SENSOR_NOTIFICATION_UUID;
 	  protected static final UUID BATTERY_SERVICE_UUID = UUID
 	          .fromString("0000180F-0000-1000-8000-00805f9b34fb");
 	  protected static final UUID BATTERY_LEVEL_UUID = UUID
@@ -161,11 +138,6 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 
 	    // names the function
 	    String functionName = "BTLEDevice";
-
-//	    // record the constructor time
-//	    startTime  = System.nanoTime();
-//	    currentTime  = startTime;
-//	    tempCurrentTime  = startTime;
 
 	    // setup new list of devices
 	    mScannedDevices = new ArrayList<DeviceScanRecord>();
@@ -389,7 +361,13 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	    return new String(hexChars);
 	  }
 	  
+	  /*
+	   * Class for use by all BLE Sensor components. Each subclass of the SensorBase class will need
+	   * to instantiate one of these in its constructor, and override the onCharacteristicChanged
+	   * method to do the specific sensor reading required for their device.
+	   */
 	  protected class BLESensorBaseBluetoothGattCallback extends BluetoothGattCallback{
+		  /** Various callback methods defined by the BLE API. */
 		  @Override
 	        public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
 	          LogMessage("onConnectionStateChange callback with status = " + status, "i");
@@ -536,67 +514,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	        }
 	  }
 
-	  // TODO: Remove specific parts.
-	  // TODO: Make sure this gets overridden correctly for WICED component.
-	  /** Various callback methods defined by the BLE API. */
-	  // Initialize in the any subclass, and override the onCharacteristicChanged method.
-	  protected BLESensorBaseBluetoothGattCallback mGattCallback;
-//	  private final BluetoothGattCallback mGattCallback = new BluetoothGattCallback() {	        
-//	        // TODO: Override in WICED subclass.
-//	        @Override
-//	        public void onCharacteristicChanged(BluetoothGatt gatt,
-//	                         BluetoothGattCharacteristic characteristic) {
-//	          if (SENSOR_NOTIFICATION_UUID.equals(characteristic.getUuid())) {
-//	            byte[] value = characteristic.getValue();
-//	            int bitMask = value[0];
-//	            int index = 1;
-//
-//	            // Update timestamp
-//	            currentTime = System.nanoTime();
-//
-//	            if ((bitMask & 0x1)>0) { 
-//	              mXAccel = (value[index+1] << 8) + (value[  index] & 0xFF);
-//	              mYAccel = (value[index+3] << 8) + (value[index+2] & 0xFF);
-//	              mZAccel = (value[index+5] << 8) + (value[index+4] & 0xFF);
-//	              index = index + 6;
-//	            }
-//	            if ((bitMask & 0x2)>0) { 
-//	              mXGyro = (value[index+1] << 8) + (value[  index] & 0xFF);
-//	              mYGyro = (value[index+3] << 8) + (value[index+2] & 0xFF);
-//	              mZGyro = (value[index+5] << 8) + (value[index+4] & 0xFF);
-//	              mXGyro = mXGyro / (float)100.0;
-//	              mYGyro = mYGyro / (float)100.0;
-//	              mZGyro = mZGyro / (float)100.0;
-//	              index = index + 6;
-//	            }
-//	            if ((bitMask & 0x4)>0) { 
-//	              mHumidity =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
-//	              mHumidity = mHumidity / (float)10.0;
-//	              index = index + 2;
-//	            }
-//	            if ((bitMask & 0x8)>0) { 
-//	              mXMagnetometer = (value[index+1] << 8) + (value[  index] & 0xFF);
-//	              mYMagnetometer = (value[index+3] << 8) + (value[index+2] & 0xFF);
-//	              mZMagnetometer = (value[index+5] << 8) + (value[index+4] & 0xFF);
-//	              index = index + 6;
-//	            }
-//	            if ((bitMask & 0x10)>0) { 
-//	              mPressure =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
-//	              mPressure = mPressure / (float)10.0;
-//	              index = index + 2;
-//	            }
-//	            if ((bitMask & 0x20)>0) { 
-//	              mTemperature =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
-//	              mTemperature = mTemperature / (float)10.0;
-//	              index = index + 2;
-//	              tempCurrentTime = System.nanoTime();
-//	            }
-//
-//	            LogMessage("Reading back sensor data with type " + bitMask + " packet", "i");
-//	            //SensorsUpdated();
-//	          }
-//	        }
-//	   };
+
 //
 //
 //	  /* ----------------------------------------------------------------------
@@ -839,17 +757,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	      LogMessage("Trying to disconnect without a connected device", "e");
 	    }
 	  }
-//
-//	  /**
-//	   * Resets the internal counter
-//	   */
-//	  @SimpleFunction(description = "Resets the internal timer")
-//	  public void ResetTimestamp() {
-//	    startTime = System.nanoTime();
-//	    currentTime = startTime;
-//	    tempCurrentTime = startTime;
-//	  }
-//
+
 	  /**
 	   * Allows to Connect to closest Device 
 	   */
@@ -935,52 +843,6 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	      LogMessage("Trying to connect with an already connected device", "e");
 	    }
 	  }
-//
-//	  /**
-//	   * Returns the time since reset in milliseconds
-//	   *
-//	   */
-//	  @SimpleProperty(description = "Returns timestamp of sensor data in milliseconds since reset", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public int Timestamp() {
-//	    long timeDiff;
-//	    int timeMilliseconds;
-//
-//	    // compute nanoseconds since start time
-//	    timeDiff = currentTime - startTime;
-//	    
-//	    // Convert to milliseconds
-//	    timeDiff = timeDiff / 1000000;
-//
-//	    // convert to int
-//	    timeMilliseconds = (int)timeDiff;
-//	      
-//	    return timeMilliseconds;
-//	  }
-//
-//	  /**
-//	   * Returns the time since reset in milliseconds
-//	   *
-//	   */
-//	  @SimpleProperty(description = "Returns timestamp of just temperature, humidity and pressure sensor data in milliseconds since reset", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public int TemperatureTimestamp() {
-//	    long timeDiff;
-//	    int timeMilliseconds;
-//
-//	    // compute nanoseconds since start time
-//	    timeDiff = tempCurrentTime - startTime;
-//	    
-//	    // Convert to milliseconds
-//	    timeDiff = timeDiff / 1000000;
-//
-//	    // convert to int
-//	    timeMilliseconds = (int)timeDiff;
-//	      
-//	    return timeMilliseconds;
-//	  }
 
 	  /**
 	   * Sets whether BLE will run in the background.
@@ -994,31 +856,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  public void RunInBackground(boolean enableFlag) {
 	    mRunInBackground = enableFlag;
 	  }
-//
-//	  /**
-//	   * Sets the temperature setting for Fahrenheit or Celsius
-//	   *
-//	   */
-//	  @DesignerProperty(editorType = PropertyTypeConstants.PROPERTY_TYPE_BOOLEAN,
-//	                    defaultValue = "True")
-//	  @SimpleProperty(description = "Sets temperature data in Fahrenheit, not Celius", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public void UseFahrenheit(boolean enableFlag) {
-//	    mUseFahrenheit = enableFlag;
-//	  }
-//	  
-//	  /**
-//	   * Sets the temperature setting for Fahrenheit or Celsius
-//	   *
-//	   */
-//	  @SimpleProperty(description = "Returns true if temperature format is in Fahrenheit", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public boolean UseFahrenheit() {
-//	    return mUseFahrenheit;
-//	  }
-//
+
 	  /**
 	   * Returns if Sensors are enabled
 	   *
@@ -1064,145 +902,7 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 	  public boolean Scanning() {
 	    return scanning;
 	  }
-//
-//
-//	  /**
-//	   * Return the X Accelerometer sensor data
-//	   */
-//	  @SimpleProperty(description = "Get X Accelerometer data", category = PropertyCategory.BEHAVIOR, userVisible = true)
-//	  public float XAccel() {
-//	    return mXAccel;
-//	  }
-//
-//	  /**
-//	   * Return the Y Accelerometer sensor data
-//	   */
-//	  @SimpleProperty(description = "Get Y Accelerometer data", category = PropertyCategory.BEHAVIOR, userVisible = true)
-//	  public float YAccel() {
-//	    return mYAccel;
-//	  }
-//
-//	  /**
-//	   * Return the Z Accelerometer sensor data
-//	   */
-//	  @SimpleProperty(description = "Get Z Accelerometer data", category = PropertyCategory.BEHAVIOR, userVisible = true)
-//	  public float ZAccel() {
-//	    return mZAccel;
-//	  }
-//
-//	  /**
-//	   * Return the X Gyro sensor data
-//	   */
-//	  @SimpleProperty(description = "Get X Gyro data", category = PropertyCategory.BEHAVIOR, userVisible = true)
-//	  public float XGyro() {
-//	    return mXGyro;
-//	  }
-//
-//	  /**
-//	   * Return the Y Gyro sensor data
-//	   */
-//	  @SimpleProperty(description = "Get Y Gyro data", category = PropertyCategory.BEHAVIOR, userVisible = true)
-//	  public float YGyro() {
-//	    return mYGyro;
-//	  }
-//
-//	  /**
-//	   * Return the Z Gyro sensor data
-//	   */
-//	  @SimpleProperty(description = "Get Z Gyro data", category = PropertyCategory.BEHAVIOR, userVisible = true)
-//	  public float ZGyro() {
-//	    return mZGyro;
-//	  }
-//
-//
-//	  /**
-//	   * Return the X Magnetometer sensor data
-//	   */
-//	  @SimpleProperty(description = "Get X Magnetometer data", category = PropertyCategory.BEHAVIOR, userVisible = true)
-//	  public float XMagnetometer() {
-//	    return mXMagnetometer;
-//	  }
-//
-//	  /**
-//	   * Return the Y Magnetometer sensor data
-//	   */
-//	  @SimpleProperty(description = "Get Y Magnetometer data", category = PropertyCategory.BEHAVIOR, userVisible = true)
-//	  public float YMagnetometer() {
-//	    return mYMagnetometer;
-//	  }
-//
-//	  /**
-//	   * Return the Z Magnetometer sensor data
-//	   */
-//	  @SimpleProperty(description = "Get Z Magnetometer data", category = PropertyCategory.BEHAVIOR, userVisible = true)
-//	  public float ZMagnetometer() {
-//	    return mZMagnetometer;
-//	  }
-//
-//	  /**
-//	   * Return the Compass heading
-//	   */
-//	  @SimpleProperty(description = "Get the compass heading in degrees assuming device is flat", category = PropertyCategory.BEHAVIOR, userVisible = true)
-//	  public float Heading() {
-//	    double mag = Math.sqrt(mXMagnetometer*mXMagnetometer + mYMagnetometer*mYMagnetometer);
-//	    double heading;
-//
-//	    LogMessage("Calculating heading from X+Y magnetometer data (" + 
-//	                mXMagnetometer + "," + mYMagnetometer + "), mag = " + mag, "i");
-//
-//	    if (mag > 0.0) { 
-//	      // convert x,y to radians to degrees
-//	      double nX = mXMagnetometer/mag;
-//	      double nY = mYMagnetometer/mag;
-//	      heading = Math.atan2(nY, nX) * 57.295779578 + 180.0;
-//	    } else { 
-//	      heading = 0.0;
-//	    }
-//
-//	    LogMessage("Heading = " + heading, "i");
-//	    return (float)heading;
-//	  }
-//
-//	  /**
-//	   * Return the Humidity sensor data
-//	   */
-//	  @SimpleProperty(description = "Get Humidity data in %", 
-//	                  category = PropertyCategory.BEHAVIOR,
-//	                  userVisible = true)
-//	  public float Humidity() {
-//	    return mHumidity;
-//	  }
-//
-//	  /**
-//	   * Return the Pressure sensor data
-//	   */
-//	  @SimpleProperty(description = "Get Pressure data in millibar", 
-//	                  category = PropertyCategory.BEHAVIOR, 
-//	                  userVisible = true)
-//	  public float Pressure() {
-//	    return mPressure;
-//	  }
-//
-//	  /**
-//	   * Return the Temperature sensor data
-//	   */
-//	  @SimpleProperty(description = "Get Temperature data in Fahrenheit or Celsius", 
-//	                  category = PropertyCategory.BEHAVIOR, 
-//	                  userVisible = true)
-//	  public float Temperature() {
-//	    float tempConvert;
-//
-//	    // get temperature in celsius
-//	    tempConvert = mTemperature;
-//
-//	    // Convert to Fahrenheit if selected
-//	    if (mUseFahrenheit) { 
-//	      tempConvert = tempConvert* (float)(9.0/5.0) + (float)32.0; 
-//	    }
-//
-//	    return tempConvert;
-//	  }
-//
+
 	  /**
 	   * Sets is enabled
 	   *

@@ -137,87 +137,29 @@ import java.util.UUID;
 		"android.permission.BLUETOOTH_ADMIN")
 public final class BluetoothLowEnergyWICEDSense extends BluetoothLowEnergySensorBase
 implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deleteable {
-
-	//private static final String LOG_TAG = "WICEDSense";
-	//private final Activity activity;
-	//
-	////if constructor finds enabled BTLE device, this is set
-	//private boolean isEnabled = false;
-	//
-	////Start with no scan
-	//private boolean scanning = false;
-	//
-	////Holds the link to the Bluetooth Adapter
-	//private BluetoothAdapter bluetoothAdapter;
-	//
-	////holds error message
-	//private boolean mLogEnabled = true;
-	//private String mLogMessage = "";
-	//
-	////holds the BT device
-	//private int deviceRssi = -130;
-	//private BluetoothDevice mDevice;
-	//
-	////Holds list of devices
-	//private ArrayList<DeviceScanRecord> mScannedDevices;
-	//
-	////holds sensors data
-	//private boolean mSensorsEnabled = false;
-	//
-	////Gatt client pointer
-	//private BluetoothGatt mBluetoothGatt = null;
-	//
-	////Service founds
-	//private List<BluetoothGattService> mGattServices;
-	//
-	////holds current connection state
-	//private int mConnectionState = STATE_DISCONNECTED;
-	//
-	////Holds specific WICED services
-	//private boolean validWICEDDevice = false;
-	//private BluetoothGattService mSensorService = null;
-	//private BluetoothGattCharacteristic mSensorNotification = null;
-	//private BluetoothGattService mBatteryService = null;
-	//private BluetoothGattCharacteristic mBatteryCharacteristic = null;
-	//
-	////Holds Battery level
-	//private int mBatteryLevel = -1;
 	
 	//Holds time stamp data
 	private long startTime = 0;
 	private long currentTime = 0;
 	private long tempCurrentTime = 0;
 	
-	////Holds the sensor data
-	//private float mXAccel = 0;
-	//private float mYAccel = 0;
-	//private float mZAccel = 0;
-	//private float mXGyro = 0;
-	//private float mYGyro = 0;
-	//private float mZGyro = 0;
-	//private float mXMagnetometer = 0;
-	//private float mYMagnetometer = 0;
-	//private float mZMagnetometer = 0;
-	//private float mHumidity = 0;
-	//private float mPressure = 0;
-	//private float mTemperature = 0;
-	//
-	////set default temperature setting
-	//private boolean mUseFahrenheit = true;
-	//private boolean mRunInBackground = true;
-	//
-	////Defines BTLE States
-	//private static final int STATE_DISCONNECTED = 0;
-	//private static final int STATE_NEED_SERVICES = 1;
-	//private static final int STATE_CONNECTED = 2;
-	//
-	///** Descriptor used to enable/disable notifications/indications */
-	//private static final UUID CLIENT_CONFIG_UUID = UUID
-	//  .fromString("00002902-0000-1000-8000-00805f9b34fb");
-	//private static final UUID BATTERY_SERVICE_UUID = UUID
-	//  .fromString("0000180F-0000-1000-8000-00805f9b34fb");
-	//private static final UUID BATTERY_LEVEL_UUID = UUID
-	//  .fromString("00002a19-0000-1000-8000-00805f9b34fb");
+	//Holds the sensor data
+	private float mXAccel = 0;
+	private float mYAccel = 0;
+	private float mZAccel = 0;
+	private float mXGyro = 0;
+	private float mYGyro = 0;
+	private float mZGyro = 0;
+	private float mXMagnetometer = 0;
+	private float mYMagnetometer = 0;
+	private float mZMagnetometer = 0;
+	private float mHumidity = 0;
+	private float mPressure = 0;
+	private float mTemperature = 0;
+	
+	//set default temperature setting
+	private boolean mUseFahrenheit = true;
+
 
 
 	/**
@@ -235,65 +177,66 @@ implements Component, OnStopListener, OnResumeListener, OnPauseListener, Deletea
 		startTime  = System.nanoTime();
 		currentTime  = startTime;
 		tempCurrentTime  = startTime;
+		
+		/** Various callback methods defined by the BLE API. */
+		mGattCallback = new BLESensorBaseBluetoothGattCallback() {
+			@Override
+			public void onCharacteristicChanged(BluetoothGatt gatt,
+					BluetoothGattCharacteristic characteristic) {
+				if (SENSOR_NOTIFICATION_UUID.equals(characteristic.getUuid())) {
+					byte[] value = characteristic.getValue();
+					int bitMask = value[0];
+					int index = 1;
+
+					// Update timestamp
+					currentTime = System.nanoTime();
+
+					if ((bitMask & 0x1)>0) { 
+						mXAccel = (value[index+1] << 8) + (value[  index] & 0xFF);
+						mYAccel = (value[index+3] << 8) + (value[index+2] & 0xFF);
+						mZAccel = (value[index+5] << 8) + (value[index+4] & 0xFF);
+						index = index + 6;
+					}
+					if ((bitMask & 0x2)>0) { 
+						mXGyro = (value[index+1] << 8) + (value[  index] & 0xFF);
+						mYGyro = (value[index+3] << 8) + (value[index+2] & 0xFF);
+						mZGyro = (value[index+5] << 8) + (value[index+4] & 0xFF);
+						mXGyro = mXGyro / (float)100.0;
+						mYGyro = mYGyro / (float)100.0;
+						mZGyro = mZGyro / (float)100.0;
+						index = index + 6;
+					}
+					if ((bitMask & 0x4)>0) { 
+						mHumidity =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
+						mHumidity = mHumidity / (float)10.0;
+						index = index + 2;
+					}
+					if ((bitMask & 0x8)>0) { 
+						mXMagnetometer = (value[index+1] << 8) + (value[  index] & 0xFF);
+						mYMagnetometer = (value[index+3] << 8) + (value[index+2] & 0xFF);
+						mZMagnetometer = (value[index+5] << 8) + (value[index+4] & 0xFF);
+						index = index + 6;
+					}
+					if ((bitMask & 0x10)>0) { 
+						mPressure =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
+						mPressure = mPressure / (float)10.0;
+						index = index + 2;
+					}
+					if ((bitMask & 0x20)>0) { 
+						mTemperature =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
+						mTemperature = mTemperature / (float)10.0;
+						index = index + 2;
+						tempCurrentTime = System.nanoTime();
+					}
+
+					LogMessage("Reading back sensor data with type " + bitMask + " packet", "i");
+					//SensorsUpdated();
+				}
+			}
+		};
 	}
 
-	// TODO: Make this set the base variable properly.
-	/** Various callback methods defined by the BLE API. */
-	private final BLESensorBaseBluetoothGattCallback mGattCallback = new BLESensorBaseBluetoothGattCallback() {
-		@Override
-		public void onCharacteristicChanged(BluetoothGatt gatt,
-				BluetoothGattCharacteristic characteristic) {
-			if (SENSOR_NOTIFICATION_UUID.equals(characteristic.getUuid())) {
-				byte[] value = characteristic.getValue();
-				int bitMask = value[0];
-				int index = 1;
-
-				// Update timestamp
-				currentTime = System.nanoTime();
-
-				if ((bitMask & 0x1)>0) { 
-					mXAccel = (value[index+1] << 8) + (value[  index] & 0xFF);
-					mYAccel = (value[index+3] << 8) + (value[index+2] & 0xFF);
-					mZAccel = (value[index+5] << 8) + (value[index+4] & 0xFF);
-					index = index + 6;
-				}
-				if ((bitMask & 0x2)>0) { 
-					mXGyro = (value[index+1] << 8) + (value[  index] & 0xFF);
-					mYGyro = (value[index+3] << 8) + (value[index+2] & 0xFF);
-					mZGyro = (value[index+5] << 8) + (value[index+4] & 0xFF);
-					mXGyro = mXGyro / (float)100.0;
-					mYGyro = mYGyro / (float)100.0;
-					mZGyro = mZGyro / (float)100.0;
-					index = index + 6;
-				}
-				if ((bitMask & 0x4)>0) { 
-					mHumidity =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
-					mHumidity = mHumidity / (float)10.0;
-					index = index + 2;
-				}
-				if ((bitMask & 0x8)>0) { 
-					mXMagnetometer = (value[index+1] << 8) + (value[  index] & 0xFF);
-					mYMagnetometer = (value[index+3] << 8) + (value[index+2] & 0xFF);
-					mZMagnetometer = (value[index+5] << 8) + (value[index+4] & 0xFF);
-					index = index + 6;
-				}
-				if ((bitMask & 0x10)>0) { 
-					mPressure =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
-					mPressure = mPressure / (float)10.0;
-					index = index + 2;
-				}
-				if ((bitMask & 0x20)>0) { 
-					mTemperature =  ((value[index+1] & 0xFF) << 8) + (value[index] & 0xFF);
-					mTemperature = mTemperature / (float)10.0;
-					index = index + 2;
-					tempCurrentTime = System.nanoTime();
-				}
-
-				LogMessage("Reading back sensor data with type " + bitMask + " packet", "i");
-				//SensorsUpdated();
-			}
-		}
-	};
+	
 
 
 	/**  ----------------------------------------------------------------------
